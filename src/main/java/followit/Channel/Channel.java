@@ -6,5 +6,5 @@ import errors.SubscriptionError;
 import followit.Client;
 
 public abstract class Channel {
-	abstract public Optional<SubscriptionError> subscribe(Client client, String username);
+  abstract public Optional<SubscriptionError> subscribe(Client client, String username);
 }
