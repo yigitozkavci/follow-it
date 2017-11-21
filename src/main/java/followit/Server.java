@@ -23,15 +23,13 @@ public class Server {
 
     Twitter twitter = new TwitterFactory().getInstance();
     ChannelBuilder channelBuilder = new ChannelBuilder(facebook, twitter);
-    int clientId = 0;
     try (ServerSocket server = new ServerSocket(4444);) {
       while (true) {
         Socket clientSocket = server.accept();
         System.out.println("Client is connected. Registering:");
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-        new Client(clientId, in, out, channelBuilder.getFacebookChannel(), channelBuilder.getTwitterChannel()).start();
-        clientId++;
+        new Client(in, out, channelBuilder.getFacebookChannel(), channelBuilder.getTwitterChannel()).start();
       }
     }
   }

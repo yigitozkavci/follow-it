@@ -4,6 +4,8 @@ import facebook4j.FacebookException;
 import twitter4j.TwitterException;
 
 public class SubscriptionError extends Exception {
+  private static final long serialVersionUID = 1L;
+
   public SubscriptionError(String details) {
     System.out.println("A subscription error has occured: " + details);
   }

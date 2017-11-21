@@ -20,7 +20,7 @@ public class Client extends Thread {
   private FacebookChannel facebookChannel;
   private TwitterChannel twitterChannel;
 
-  public Client(int id, BufferedReader in, PrintWriter out, FacebookChannel facebookChannel,
+  public Client(BufferedReader in, PrintWriter out, FacebookChannel facebookChannel,
       TwitterChannel twitterChannel) {
     this.in = in;
     this.out = out;
