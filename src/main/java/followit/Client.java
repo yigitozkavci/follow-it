@@ -21,7 +21,6 @@ public class Client extends Thread {
 	private TwitterChannel twitterChannel;
 	
 	public Client(int id, BufferedReader in, PrintWriter out, FacebookChannel facebookChannel, TwitterChannel twitterChannel) {
-		this.clientId = clientId;
 		this.in = in;
 		this.out = out;
 		this.facebookChannel = facebookChannel;
@@ -46,9 +45,9 @@ public class Client extends Thread {
 	
 	private Optional<Tuple<Channel, String>> processInput(String inputLine) {
 		if(inputLine == "subscribe Facebook") {
-			return Optional.of(new Tuple(facebookChannel, "Yigit"));
+			return Optional.of(new Tuple<Channel, String>(facebookChannel, "Yigit"));
 		} else if(inputLine.equalsIgnoreCase("subscribe Twitter")) {
-			return Optional.of(new Tuple(twitterChannel, "Yigit Ozkavci"));
+			return Optional.of(new Tuple<Channel, String>(twitterChannel, "Yigit Ozkavci"));
 		} else {
 			return Optional.empty();
 		}
@@ -56,6 +55,9 @@ public class Client extends Thread {
 	
 	public void notifyUpdate(List<Status> tweets) {
 		out.println("Got an update with tweets: " + tweets);
-		
+	}
+
+	public void notifyDebug() {
+		out.println("Got a debug update");
 	}
 }

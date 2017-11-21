@@ -35,8 +35,8 @@ public class Server {
 					clientId,
 					in,
 					out,
-					channelBuilder.buildFacebook(),
-					channelBuilder.buildTwitter()
+					channelBuilder.getFacebookChannel(),
+					channelBuilder.getTwitterChannel()
 				).start();
 				clientId++;
 			}

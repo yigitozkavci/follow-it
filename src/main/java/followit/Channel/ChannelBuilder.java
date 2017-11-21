@@ -4,19 +4,19 @@ import facebook4j.Facebook;
 import twitter4j.Twitter;
 
 public class ChannelBuilder {
-	private Facebook facebook;
-	private Twitter twitter;
+	private FacebookChannel facebookChan;
+	private TwitterChannel twitterChan;
 	
 	public ChannelBuilder(Facebook facebook, Twitter twitter) {
-		this.facebook = facebook;
-		this.twitter = twitter;
+		this.facebookChan = new FacebookChannel(facebook);
+		this.twitterChan = new TwitterChannel(twitter);
 	}
 	
-	public FacebookChannel buildFacebook() {
-		return new FacebookChannel(facebook);
+	public FacebookChannel getFacebookChannel() {
+		return this.facebookChan;
 	}
 	
-	public TwitterChannel buildTwitter() {
-		return new TwitterChannel(twitter);
+	public TwitterChannel getTwitterChannel() {
+		return this.twitterChan;
 	}
 }

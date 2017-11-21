@@ -35,7 +35,11 @@ class UserWatcher extends TimerTask {
 		try {
 			Paging paging = this.sinceId.isPresent() ? new Paging(this.sinceId.get()) : new Paging();
 			List<Status> tweets = twitter.getUserTimeline(user.getName(), paging);
-			this.sinceId = Optional.of(tweets.get(tweets.size() - 1).getId());
+			watchers.forEach((watcher) -> {
+				watcher.notifyDebug();
+			});
+			if(tweets.isEmpty()) return;
+			this.sinceId = Optional.of(tweets.get(0).getId());
 			watchers.forEach((watcher) -> {
 				watcher.notifyUpdate(tweets);
 			});
@@ -45,6 +49,7 @@ class UserWatcher extends TimerTask {
 		}
 	}
 }
+
 public class TwitterChannel extends Channel {
 	private Twitter twitter;
 	private HashMap<User, List<Client>> subscriptions;
