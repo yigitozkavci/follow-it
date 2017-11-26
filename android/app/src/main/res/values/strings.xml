@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name" translatable="false">Follow-it</string>
+    <string name="title_home" translatable="false">Home</string>
+    <string name="title_dashboard" translatable="false">Dashboard</string>
+    <string name="title_notifications" translatable="false">Notifications</string>
+    <string name="subscribe_button_text" translatable="false">Subscribe</string>
+    <string name="subscribe_text_field_placeholder" translatable="false">Username</string>
+</resources>
