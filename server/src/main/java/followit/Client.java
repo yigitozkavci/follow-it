@@ -29,7 +29,6 @@ public class Client extends Thread {
   }
 
   public void run() {
-    System.out.println("Client thread is registered. I got the streams!");
     String inputLine;
     try {
       while ((inputLine = in.readLine()) != null) {

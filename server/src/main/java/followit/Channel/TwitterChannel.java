@@ -15,13 +15,15 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.User;
 
-class UserWatcher extends TimerTask {
+abstract class Agent extends TimerTask {}
+
+class TwitterAgent extends Agent {
   private User user;
   private List<Client> watchers;
   private Twitter twitter;
   private Optional<Long> sinceId;
 
-  public UserWatcher(User user, ArrayList<Client> watchers, Twitter twitter) {
+  public TwitterAgent(User user, ArrayList<Client> watchers, Twitter twitter) {
     this.user = user;
     this.watchers = watchers;
     this.twitter = twitter;
@@ -31,7 +33,6 @@ class UserWatcher extends TimerTask {
   @Override
   public void run() {
     // TODO Auto-generated method stub
-    System.out.println("Checking updates for user " + user.getName() + " for Twitter channel.");
     try {
       Paging paging = this.sinceId.isPresent() ? new Paging(this.sinceId.get()) : new Paging();
       List<Status> tweets = twitter.getUserTimeline(user.getName(), paging);
@@ -69,7 +70,7 @@ public class TwitterChannel extends Channel {
         if (!subscriptions.containsKey(user)) {
           ArrayList<Client> watcherClients = new ArrayList<>();
           subscriptions.put(user, watcherClients);
-          new Timer().scheduleAtFixedRate(new UserWatcher(user, watcherClients, twitter), 0, 5000);
+          new Timer().scheduleAtFixedRate(new TwitterAgent(user, watcherClients, twitter), 0, 5000);
         }
         subscriptions.get(user).add(client);
         return Optional.empty();
