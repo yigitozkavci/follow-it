@@ -85,4 +85,8 @@ public class TwitterChannel extends Channel {
   private Optional<User> findUser(String username) throws TwitterException {
     return twitter.searchUsers(username, 5).stream().findFirst();
   }
+  
+  public String toString() {
+    return "Twitter";
+  }
 }

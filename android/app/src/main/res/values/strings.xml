@@ -5,4 +5,7 @@
     <string name="title_notifications" translatable="false">Notifications</string>
     <string name="subscribe_button_text" translatable="false">Subscribe</string>
     <string name="subscribe_text_field_placeholder" translatable="false">Username</string>
+    <string name="register_button_text" translatable="false">Register</string>
+    <string name="subscribe_facebook_button_text" translatable="false">Subscribe Facebook</string>
+    <string name="subscribe_twitter_button_text" translatable="false">Subscribe Twitter</string>
 </resources>

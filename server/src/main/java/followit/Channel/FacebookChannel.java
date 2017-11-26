@@ -22,4 +22,8 @@ public class FacebookChannel extends Channel {
     // TODO: Subscription logic here
     return Optional.empty();
   }
+  
+  public String toString() {
+    return "Facebook";
+  }
 }
