@@ -17,7 +17,7 @@ import twitter4j.TwitterFactory;
 
 public class Server {
   public enum Tag {
-    ERROR, TWEETS
+    REGISTER_ACCEPT, SUBSCRIPTION_ACCEPT, ERROR, TWEETS
   }
   
   public static void main(String[] args) throws FacebookException, TwitterException, IOException {

@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import java.io.BufferedReader;
@@ -32,11 +33,13 @@ public class DisplayMessageActivity extends AppCompatActivity {
         this.username = intent.getStringExtra(MainActivity.CONNECTION_USERNAME);
 
         registerBtn = (Button) findViewById(R.id.register_button);
+
         subscribeFacebookButton = (Button) findViewById(R.id.subscribe_facebook_button);
         subscribeFacebookButton.setEnabled(false);
 
         subscribeTwitterButton = (Button) findViewById(R.id.subscribe_twitter_button);
         subscribeTwitterButton.setEnabled(false);
+
 
         TextView textView = findViewById(R.id.textView);
         textView.setText(this.username);
@@ -60,12 +63,14 @@ public class DisplayMessageActivity extends AppCompatActivity {
     }
 
     public void handleFacebookSubscription(View view) {
-        this.fc.subscribe(Channel.FACEBOOK);
+        String user = ((EditText) findViewById(R.id.subs_fb_user_text)).getText().toString();
+        this.fc.subscribe(Channel.FACEBOOK, user);
         this.subscribeFacebookButton.setEnabled(false);
     }
 
     public void handleTwitterSubscription(View view) {
-        this.fc.subscribe(Channel.TWITTER);
+        String user = ((EditText) findViewById(R.id.subs_twitter_user_text)).getText().toString();
+        this.fc.subscribe(Channel.TWITTER, user);
         this.subscribeTwitterButton.setEnabled(false);
     }
 }

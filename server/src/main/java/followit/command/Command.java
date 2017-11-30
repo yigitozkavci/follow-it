@@ -32,7 +32,10 @@ public class Command {
     switch(this.tag) {
     case REGISTER:
       findDataFromKey(Client.Tag.REGISTER, USERNAME_KEY)
-        .ifPresent((username) -> client.register(username));
+        .ifPresent((username) -> {
+          client.register(username);
+          client.sendMessage(Server.Tag.REGISTER_ACCEPT);
+        });
       break;
     case SUBSCRIBE:
       findSubscriptionChannel()
@@ -42,6 +45,7 @@ public class Command {
               {
                 try {
                   chan.subscribe(client, user);
+                  client.sendMessage(Server.Tag.SUBSCRIPTION_ACCEPT, "channel", chan.getClass().getName());
                 } catch (SubscriptionException e) {
                   System.out.println(e.getMessage());
                   sendErrToClient(e.getMessage());
@@ -81,8 +85,6 @@ public class Command {
   }
   
   private void sendErrToClient(String message) {
-    HashMap<String, Object> dat = new HashMap<>();
-    dat.put("message", message);
-    client.sendMessage(Server.Tag.ERROR, dat);
+    client.sendMessage(Server.Tag.ERROR, "message", message);
   }
 }

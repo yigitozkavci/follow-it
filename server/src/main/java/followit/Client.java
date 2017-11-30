@@ -54,16 +54,28 @@ public class Client extends Thread {
   }
 
   public void notifyUpdate(List<Status> tweets) {
-    HashMap<String, Object> data = new HashMap<>();
-    data.put("tweets", tweets);
-    sendMessage(Server.Tag.TWEETS, data);
+    sendMessage(Server.Tag.TWEETS, "tweets", tweets);
   }
   
-  public void sendMessage(Server.Tag tag, HashMap<String, Object> data) {
+  public void sendMessage(Server.Tag tag, String key, Object value) {
     HashMap<String, Object> message = new HashMap<>();
+    HashMap<String, Object> data = new HashMap<>();
+    data.put(key, value);
+    
     message.put("tag", tag);
     message.put("data", data);
-    this.out.println(new Gson().toJson(message));
+    sendMessageData(message);
+  }
+
+  public void sendMessage(Server.Tag tag) {
+    HashMap<String, Object> message = new HashMap<>();
+    message.put("tag", tag);
+    sendMessageData(message);
+  }
+  
+  private void sendMessageData(HashMap<String, Object> data) {
+    this.out.println(new Gson().toJson(data));
+    System.out.println("Sent message: " + data.toString());
   }
   
   public void register(String username) {
