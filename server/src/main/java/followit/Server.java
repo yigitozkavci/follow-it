@@ -10,12 +10,16 @@ import java.net.Socket;
 import facebook4j.Facebook;
 import facebook4j.FacebookException;
 import facebook4j.FacebookFactory;
-import followit.Channel.ChannelBuilder;
+import followit.channel.ChannelBuilder;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 
 public class Server {
+  public enum Tag {
+    ERROR, TWEETS
+  }
+  
   public static void main(String[] args) throws FacebookException, TwitterException, IOException {
     // TODO Auto-generated method stub
     Facebook facebook = new FacebookFactory().getInstance();
@@ -28,7 +32,7 @@ public class Server {
         Socket clientSocket = server.accept();
         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-        new Client(in, out, channelBuilder.getFacebookChannel(), channelBuilder.getTwitterChannel()).start();
+        new Client(in, out, channelBuilder).start();
       }
     }
   }

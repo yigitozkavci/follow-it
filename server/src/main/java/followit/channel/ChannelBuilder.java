@@ -1,4 +1,4 @@
-package followit.Channel;
+package followit.channel;
 
 import facebook4j.Facebook;
 import twitter4j.Twitter;

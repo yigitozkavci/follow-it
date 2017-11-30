@@ -1,4 +1,4 @@
-package followit.Channel;
+package followit.channel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import errors.SubscriptionError;
+import errors.SubscriptionException;
 import followit.Client;
 import twitter4j.Paging;
 import twitter4j.Status;
@@ -36,9 +36,9 @@ class TwitterAgent extends Agent {
     try {
       Paging paging = this.sinceId.isPresent() ? new Paging(this.sinceId.get()) : new Paging();
       List<Status> tweets = twitter.getUserTimeline(user.getName(), paging);
-      watchers.forEach((watcher) -> {
-        watcher.notifyDebug();
-      });
+//      watchers.forEach((watcher) -> {
+//        watcher.notifyDebug();
+//      });
       if (tweets.isEmpty())
         return;
       this.sinceId = Optional.of(tweets.get(0).getId());
@@ -61,7 +61,8 @@ public class TwitterChannel extends Channel {
     subscriptions = new HashMap<>();
   }
 
-  public Optional<SubscriptionError> subscribe(Client client, String username) {
+  public void subscribe(Client client, String username) throws SubscriptionException {
+    super.clientCheck(client);
     try {
       Optional<User> mb_user = findUser(username);
       if (mb_user.isPresent()) {
@@ -73,12 +74,11 @@ public class TwitterChannel extends Channel {
           new Timer().scheduleAtFixedRate(new TwitterAgent(user, watcherClients, twitter), 0, 5000);
         }
         subscriptions.get(user).add(client);
-        return Optional.empty();
       } else {
-        return Optional.of(new SubscriptionError("User cannot be found"));
+        throw new SubscriptionException("User cannot be found");
       }
     } catch (TwitterException e) {
-      return Optional.of(new SubscriptionError(e));
+      throw new SubscriptionException(e);
     }
   }
 
@@ -86,7 +86,7 @@ public class TwitterChannel extends Channel {
     return twitter.searchUsers(username, 5).stream().findFirst();
   }
   
-  public String toString() {
+  public static final String getName() {
     return "Twitter";
   }
 }

@@ -1,10 +1,8 @@
-package followit.Channel;
+package followit.channel;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
-import errors.SubscriptionError;
 import facebook4j.Facebook;
 import facebook4j.User;
 import followit.Client;
@@ -18,12 +16,12 @@ public class FacebookChannel extends Channel {
       subscriptions = new HashMap<>();
   }
 
-  public Optional<SubscriptionError> subscribe(Client client, String username) {
+  public void subscribe(Client client, String username) {
     // TODO: Subscription logic here
-    return Optional.empty();
+    
   }
   
-  public String toString() {
+  public static final String getName() {
     return "Facebook";
   }
 }
