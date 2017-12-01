@@ -1,69 +1,33 @@
-package com.followit.yigitozkavci.follow_it;
+package com.followit.yigitozkavci.follow_it.network;
 
 import android.util.Log;
 
+import com.followit.yigitozkavci.follow_it.exceptions.ProtocolException;
+import com.followit.yigitozkavci.follow_it.models.Subscription;
 import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-
-class ProtocolException extends Exception {
-    private String message;
-
-    public ProtocolException(String message) {
-        this.message = message;
-    }
-
-    public String getMessage() {
-        return this.message;
-    }
-}
-
-enum Tag {
-    REGISTER, REGISTER_ACCEPT, ERROR, SUBSCRIBE, SUBSCRIPTION_ACCEPT, TWEETS, FB_POSTS;
-
-    public boolean isSubscribedDataTag() {
-        return this == TWEETS || this == FB_POSTS;
-    }
-}
-
-class ServerMessage {
-    private Tag tag;
-    private HashMap<String, Object> data;
-
-    public Tag getTag() {
-        return this.tag;
-    }
-
-    public Object getData() {
-        return this.data;
-    }
-
-    public String getErrorMsg() throws ProtocolException {
-        if(this.data == null || !this.data.containsKey("message")) {
-            throw new ProtocolException("Tag is ERROR but data does not contain `message` key");
-        }
-        return this.data.get("message").toString();
-    }
-}
 
 public class FIConnection {
     private BufferedReader in;
     private PrintWriter out;
     private String username;
     private boolean isRegistered;
+    private ArrayList<Subscription> subscriptions;
 
-    public FIConnection(BufferedReader in, PrintWriter out) {
+    public FIConnection(BufferedReader in, PrintWriter out, ArrayList<Subscription> subscriptions) {
         this.in = in;
         this.out = out;
         this.isRegistered = false;
+        this.subscriptions = subscriptions;
     }
 
     public boolean register(String username) {
-        sendMessage(Tag.REGISTER, "username", username);
+        sendMsg(Tag.REGISTER, "username", username);
         try {
             recvTag(Tag.REGISTER_ACCEPT);
             this.isRegistered = true;
@@ -78,9 +42,10 @@ public class FIConnection {
     }
 
     public boolean subscribe(Channel channel, String user) {
-        sendMessage(Tag.SUBSCRIBE, "channel", channel.toString(), "user", user);
+        sendMsg(Tag.SUBSCRIBE, "channel", channel.toString(), "user", user);
         try {
             recvTag(Tag.SUBSCRIPTION_ACCEPT);
+            this.subscriptions.add(new Subscription(channel, user));
         } catch(ProtocolException e) {
             Log.e("SUBSCRIPTION", "ProtocolException", e);
         } catch(IOException e) {
@@ -117,13 +82,13 @@ public class FIConnection {
         // TODO: Implement
     }
 
-    private void sendMessage(Tag tag) {
+    private void sendMsg(Tag tag) {
         HashMap<String, Object> msgObj = new HashMap<>();
         msgObj.put("tag", tag);
         sendMessageData(msgObj);
     }
 
-    private void sendMessage(Tag tag, String key, Object val) {
+    private void sendMsg(Tag tag, String key, Object val) {
         HashMap<String, Object> msgObj = new HashMap<>();
         HashMap<String, Object> data = new HashMap<>();
         data.put(key, val);
@@ -132,7 +97,7 @@ public class FIConnection {
         sendMessageData(msgObj);
     }
 
-    private void sendMessage(Tag tag, String key, Object val, String key2, Object val2) {
+    private void sendMsg(Tag tag, String key, Object val, String key2, Object val2) {
         HashMap<String, Object> msgObj = new HashMap<>();
         HashMap<String, Object> data = new HashMap<>();
         data.put(key, val);

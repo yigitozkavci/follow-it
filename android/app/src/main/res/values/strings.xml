@@ -3,9 +3,11 @@
     <string name="title_home" translatable="false">Home</string>
     <string name="title_dashboard" translatable="false">Dashboard</string>
     <string name="title_notifications" translatable="false">Notifications</string>
-    <string name="subscribe_button_text" translatable="false">Subscribe</string>
+    <string name="landing_button_text" translatable="false">Enter</string>
     <string name="subscribe_text_field_placeholder" translatable="false">Username</string>
     <string name="register_button_text" translatable="false">Register</string>
     <string name="subscribe_facebook_button_text" translatable="false">Subscribe Facebook</string>
     <string name="subscribe_twitter_button_text" translatable="false">Subscribe Twitter</string>
+    <string name="dashboard_text" translatable="false">Dashboard</string>
+    <string name="add_subscription_button" translatable="false">Add Subscription</string>
 </resources>
