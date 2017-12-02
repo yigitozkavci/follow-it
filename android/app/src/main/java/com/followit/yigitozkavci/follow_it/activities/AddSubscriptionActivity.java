@@ -2,43 +2,50 @@ package com.followit.yigitozkavci.follow_it.activities;
 
 import android.app.Activity;
 import android.arch.persistence.room.Room;
-import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
 
 import com.followit.yigitozkavci.follow_it.R;
 import com.followit.yigitozkavci.follow_it.database.FIDatabase;
 import com.followit.yigitozkavci.follow_it.models.Subscription;
 import com.followit.yigitozkavci.follow_it.models.SubscriptionDao;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.followit.yigitozkavci.follow_it.network.Channel;
+import com.followit.yigitozkavci.follow_it.tasks.AddSubscriptionTask;
 
 /**
  * Created by yigitozkavci on 30.11.2017.
  */
 
 public class AddSubscriptionActivity extends Activity {
-
+    private View view;
+    private SubscriptionDao subscriptionDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_subscription);
+        subscriptionDao = Room.databaseBuilder(getApplicationContext(), FIDatabase.class, "fi").build().subscriptionDao();
+    }
 
-
-
-        final SubscriptionDao dao = Room.databaseBuilder(getApplicationContext(), FIDatabase.class, "fi").build().subscriptionDao();
-        new AsyncTask<Void, Void, List<Subscription>>() {
+    public void handleAddFacebookSubscription(View view) {
+        final String user = ((EditText) findViewById(R.id.add_fb_sub_usr_txt)).getText().toString();
+        new AddSubscriptionTask(this.subscriptionDao, new Subscription(Channel.FACEBOOK, user)) {
             @Override
-            protected List<Subscription> doInBackground(Void... params) {
-                return dao.getAll();
+            protected void onPostExecute(Void aVoid) {
+                MainActivity.conn.subscribe(Channel.FACEBOOK, user);
+                finish();
             }
+        }.execute();
+    }
 
-            protected void onPostExecute(ArrayList<Subscription> subs) {
-                Log.d("SUB", subs.toString());
-
+    public void handleAddTwitterSubscription(View view) {
+        final String user = ((EditText) findViewById(R.id.add_twitter_sub_usr_txt)).getText().toString();
+        new AddSubscriptionTask(this.subscriptionDao, new Subscription(Channel.TWITTER, user)) {
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                MainActivity.conn.subscribe(Channel.TWITTER, user);
+                finish();
             }
         }.execute();
     }

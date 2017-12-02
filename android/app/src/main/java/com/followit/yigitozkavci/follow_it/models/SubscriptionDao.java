@@ -1,6 +1,7 @@
 package com.followit.yigitozkavci.follow_it.models;
 
 import android.arch.persistence.room.Dao;
+import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.Query;
 
@@ -17,4 +18,10 @@ public interface SubscriptionDao {
 
     @Insert
     public void insertSubscription(Subscription sub);
+
+    @Delete
+    public void deleteSubscription(Subscription sub);
+
+    @Query("DELETE FROM subscriptions")
+    public void deleteSubscriptions();
 }

@@ -5,9 +5,14 @@ import com.followit.yigitozkavci.follow_it.exceptions.ProtocolException;
 import java.util.HashMap;
 
 /**
- * Created by yigitozkavci on 30.11.2017.
+ * Created by yigitozkavci on 2.12.2017.
  */
-public class ServerMessage {
+
+public class ToServerMessage {
+    public enum Tag {
+        REGISTER, SUBSCRIBE;
+    }
+
     private Tag tag;
     private HashMap<String, Object> data;
 
@@ -26,3 +31,4 @@ public class ServerMessage {
         return this.data.get("message").toString();
     }
 }
+

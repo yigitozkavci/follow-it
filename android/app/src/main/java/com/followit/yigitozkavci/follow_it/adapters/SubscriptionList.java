@@ -12,6 +12,7 @@ import com.followit.yigitozkavci.follow_it.R;
 import com.followit.yigitozkavci.follow_it.models.Subscription;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by yigitozkavci on 30.11.2017.
@@ -19,9 +20,9 @@ import java.util.ArrayList;
 
 public class SubscriptionList extends ArrayAdapter<String> {
     private final Activity context;
-    private ArrayList<Subscription> subscriptions;
+    private List<Subscription> subscriptions;
 
-    public SubscriptionList(Activity context, ArrayList<Subscription> subscriptions) {
+    public SubscriptionList(Activity context, List<Subscription> subscriptions) {
         super(context, R.layout.subscription_list_item_view, new String[subscriptions.size()]);
         this.context = context;
         this.subscriptions = subscriptions;
