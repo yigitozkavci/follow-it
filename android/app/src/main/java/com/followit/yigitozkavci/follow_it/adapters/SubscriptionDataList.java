@@ -10,22 +10,22 @@ import android.widget.TextView;
 
 import com.followit.yigitozkavci.follow_it.R;
 import com.followit.yigitozkavci.follow_it.models.Subscription;
+import com.followit.yigitozkavci.follow_it.models.SubscriptionData;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by yigitozkavci on 30.11.2017.
+ * Created by yigitozkavci on 2.12.2017.
  */
 
-public class SubscriptionList extends ArrayAdapter<String> {
+public class SubscriptionDataList extends ArrayAdapter<String> {
     private final Activity context;
-    private List<Subscription> subscriptions;
+    private List<SubscriptionData> subscriptionData;
 
-    public SubscriptionList(Activity context, List<Subscription> subscriptions) {
-        super(context, R.layout.subscription_list_item_view, new String[subscriptions.size()]);
+    public SubscriptionDataList(Activity context, List<SubscriptionData> subscriptionData) {
+        super(context, R.layout.subscription_data_list_item_view, new String[subscriptionData.size()]);
         this.context = context;
-        this.subscriptions = subscriptions;
+        this.subscriptionData = subscriptionData;
     }
 
     @Override
@@ -34,15 +34,8 @@ public class SubscriptionList extends ArrayAdapter<String> {
         View rowView = inflater.inflate(R.layout.subscription_list_item_view, null, true);
 
         TextView txtTitle = (TextView) rowView.findViewById(R.id.txt);
-        ImageView imageView = (ImageView) rowView.findViewById(R.id.img);
 
-        txtTitle.setText(subscriptions.get(position).getUsername());
-
-        imageView.setImageResource(subscriptions.get(position).getChannel().getImageId());
+        txtTitle.setText(subscriptionData.get(position).getData());
         return rowView;
-    }
-
-    public Subscription getItemAtPos(int position) {
-        return subscriptions.get(position);
     }
 }

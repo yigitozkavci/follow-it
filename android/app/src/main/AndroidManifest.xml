@@ -31,6 +31,12 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.DashboardActivity" />
         </activity>
+        <activity android:name=".activities.SingleSubscriptionActivity"
+            android:parentActivityName=".activities.DashboardActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.DashboardActivity" />
+        </activity>
     </application>
 
 </manifest>

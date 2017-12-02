@@ -14,8 +14,11 @@ import java.util.List;
 @Dao
 public interface SubscriptionDataDao {
     @Query("SELECT * FROM subscription_data")
-    List<Subscription> getAll();
+    List<SubscriptionData> getAll();
 
     @Insert
-    public void insertSubscriptionData(SubscriptionData sd);
+    void insertSubscriptionData(SubscriptionData sd);
+
+    @Query("DELETE FROM subscription_data")
+    void deleteSubscriptionData();
 }

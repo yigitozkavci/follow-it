@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -19,6 +20,7 @@ import com.followit.yigitozkavci.follow_it.adapters.SubscriptionList;
 import com.followit.yigitozkavci.follow_it.models.SubscriptionDataDao;
 import com.followit.yigitozkavci.follow_it.network.Channel;
 import com.followit.yigitozkavci.follow_it.tasks.AddSubscriptionDataTask;
+import com.followit.yigitozkavci.follow_it.tasks.DeleteSubscriptionDataTask;
 import com.followit.yigitozkavci.follow_it.tasks.DeleteSubscriptionsTask;
 import com.followit.yigitozkavci.follow_it.tasks.GetSubscriptionsTask;
 import com.followit.yigitozkavci.follow_it.utils.Triple;
@@ -36,6 +38,8 @@ public class DashboardActivity extends AppCompatActivity {
     private SubscriptionDao subscriptionDao;
     private SubscriptionDataDao subscriptionDataDao;
 
+    protected static FIDatabase db; // Wow, this is a dangerous act for sure.
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,8 +53,20 @@ public class DashboardActivity extends AppCompatActivity {
         this.adapter = new SubscriptionList(this, this.subscriptions);
         this.subscriptionList.setAdapter(adapter);
 
+        final Activity self = this;
+
+        subscriptionList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position,
+                                    long id) {
+                Subscription entry = ((SubscriptionList) parent.getAdapter()).getItemAtPos(position);
+                Intent intent = new Intent(self, SingleSubscriptionActivity.class);
+                intent.putExtra("sub_id", entry.getId());
+                startActivity(intent);
+            }
+        });
         // Initialize persistent DB
-        FIDatabase db = Room.databaseBuilder(getApplicationContext(), FIDatabase.class, "fi")
+        db = Room.databaseBuilder(getApplicationContext(), FIDatabase.class, "fi")
                 .fallbackToDestructiveMigration()
                 .build();
         this.subscriptionDao = db.subscriptionDao();
@@ -58,6 +74,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         // Enable this to flush the database
         new DeleteSubscriptionsTask(subscriptionDao).execute();
+        new DeleteSubscriptionDataTask(subscriptionDataDao).execute();
 
         MainActivity.conn.setDataListener(new TaskListener<Triple<Channel, String, ArrayList<String>>>() {
             @Override
