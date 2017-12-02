@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -15,7 +16,12 @@ import com.followit.yigitozkavci.follow_it.models.SubscriptionDao;
 import com.followit.yigitozkavci.follow_it.R;
 import com.followit.yigitozkavci.follow_it.models.Subscription;
 import com.followit.yigitozkavci.follow_it.adapters.SubscriptionList;
+import com.followit.yigitozkavci.follow_it.models.SubscriptionDataDao;
+import com.followit.yigitozkavci.follow_it.network.Channel;
+import com.followit.yigitozkavci.follow_it.tasks.AddSubscriptionDataTask;
+import com.followit.yigitozkavci.follow_it.tasks.DeleteSubscriptionsTask;
 import com.followit.yigitozkavci.follow_it.tasks.GetSubscriptionsTask;
+import com.followit.yigitozkavci.follow_it.utils.Triple;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +32,9 @@ public class DashboardActivity extends AppCompatActivity {
     private ArrayAdapter<String> adapter;
     private ListView subscriptionList;
     protected static final String SUBSCRIPTIONS_EXTRA_KEY = "subscriptions";
+
     private SubscriptionDao subscriptionDao;
+    private SubscriptionDataDao subscriptionDataDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,11 +50,40 @@ public class DashboardActivity extends AppCompatActivity {
         this.subscriptionList.setAdapter(adapter);
 
         // Initialize persistent DB
-        FIDatabase db = Room.databaseBuilder(getApplicationContext(), FIDatabase.class, "fi").build();
+        FIDatabase db = Room.databaseBuilder(getApplicationContext(), FIDatabase.class, "fi")
+                .fallbackToDestructiveMigration()
+                .build();
         this.subscriptionDao = db.subscriptionDao();
+        this.subscriptionDataDao = db.subscriptionDataDao();
 
         // Enable this to flush the database
-        // new DeleteSubscriptionsTask(subscriptionDao).execute();
+        new DeleteSubscriptionsTask(subscriptionDao).execute();
+
+        MainActivity.conn.setDataListener(new TaskListener<Triple<Channel, String, ArrayList<String>>>() {
+            @Override
+            public void onFinished(Triple<Channel, String, ArrayList<String>> response) {
+                final Channel respChan = response.left;
+                final String respUser = response.middle;
+                final List<String> respData = response.right;
+
+                new GetSubscriptionsTask(subscriptionDao) {
+                    @Override
+                    protected void onPostExecute(List<Subscription> subs) {
+                        Log.d("WOW", "Received a data block from channel " + respChan + " for the user " + respUser);
+                        for(Subscription s : subs) {
+                            if(s.getChannel() == respChan && s.getUsername().equals(respUser)) {
+                                new AddSubscriptionDataTask(subscriptionDataDao, s, respData) {
+                                    @Override
+                                    protected void onPostExecute(Void _params) {
+                                        Log.d("WOW", "Added subscription data to database...");
+                                    }
+                                }.execute();
+                            }
+                        }
+                    }
+                }.execute();
+            }
+        });
     }
 
     @Override

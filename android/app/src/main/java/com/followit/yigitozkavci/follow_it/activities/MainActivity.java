@@ -46,9 +46,9 @@ public class MainActivity extends AppCompatActivity {
 
         final Intent dashboardIntent = new Intent(this, DashboardActivity.class);
         // Initialize socket connection
-        TaskListener listener = new TaskListener() {
+        TaskListener<Void> listener = new TaskListener<Void>() {
             @Override
-            public void onFinished() {
+            public void onFinished(Void _param) {
                 startActivity(dashboardIntent);
             }
         };

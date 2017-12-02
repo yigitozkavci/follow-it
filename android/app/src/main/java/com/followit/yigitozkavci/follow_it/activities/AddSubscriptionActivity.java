@@ -30,23 +30,31 @@ public class AddSubscriptionActivity extends Activity {
 
     public void handleAddFacebookSubscription(View view) {
         final String user = ((EditText) findViewById(R.id.add_fb_sub_usr_txt)).getText().toString();
-        new AddSubscriptionTask(this.subscriptionDao, new Subscription(Channel.FACEBOOK, user)) {
+        MainActivity.conn.subscribe(Channel.FACEBOOK, user, new TaskListener<Void>() {
             @Override
-            protected void onPostExecute(Void aVoid) {
-                MainActivity.conn.subscribe(Channel.FACEBOOK, user);
-                finish();
+            public void onFinished(Void _v) {
+                new AddSubscriptionTask(subscriptionDao, new Subscription(Channel.FACEBOOK, user)) {
+                    @Override
+                    protected void onPostExecute(Void aVoid) {
+                        finish();
+                    }
+                }.execute();
             }
-        }.execute();
+        });
     }
 
     public void handleAddTwitterSubscription(View view) {
         final String user = ((EditText) findViewById(R.id.add_twitter_sub_usr_txt)).getText().toString();
-        new AddSubscriptionTask(this.subscriptionDao, new Subscription(Channel.TWITTER, user)) {
+        MainActivity.conn.subscribe(Channel.TWITTER, user, new TaskListener<Void>() {
             @Override
-            protected void onPostExecute(Void aVoid) {
-                MainActivity.conn.subscribe(Channel.TWITTER, user);
-                finish();
+            public void onFinished(Void _v) {
+                new AddSubscriptionTask(subscriptionDao, new Subscription(Channel.TWITTER, user)) {
+                    @Override
+                    protected void onPostExecute(Void _v) {
+                        finish();
+                    }
+                }.execute();
             }
-        }.execute();
+        });
     }
 }

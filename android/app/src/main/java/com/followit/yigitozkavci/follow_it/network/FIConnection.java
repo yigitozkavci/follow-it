@@ -4,12 +4,19 @@ import android.util.Log;
 
 import com.followit.yigitozkavci.follow_it.activities.TaskListener;
 import com.followit.yigitozkavci.follow_it.exceptions.ProtocolException;
+import com.followit.yigitozkavci.follow_it.models.Subscription;
+import com.followit.yigitozkavci.follow_it.utils.Triple;
+import com.followit.yigitozkavci.follow_it.utils.Tuple;
 import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+
+import static com.followit.yigitozkavci.follow_it.network.Channel.*;
 
 class SocketWatcher extends Thread {
     private BufferedReader in;
@@ -32,6 +39,7 @@ class SocketWatcher extends Thread {
     }
 
     private void processMessage(FromServerMessage respMsg) throws ProtocolException {
+        Log.d("MESSAGE", "Got message: " + respMsg.toString());
         switch(respMsg.getTag()) {
             case ERROR:
                 throw new ProtocolException("Received error from server: " + respMsg.getErrorMsg());
@@ -40,8 +48,10 @@ class SocketWatcher extends Thread {
                 break;
             case SUBSCRIPTION_ACCEPT:
                 this.conn.setCanSubscribe(true);
+                this.conn.completeSubscription();
                 break;
             case TWEETS:
+                this.conn.tweetsArrived(respMsg.getTweetData());
                 break;
             case FB_POSTS:
                 break;
@@ -68,7 +78,9 @@ public class FIConnection {
     private boolean canSubscribe;
 
     // Task listeners
-    private TaskListener registerListener;
+    private TaskListener<Void> registerListener;
+    private TaskListener<Void> subscriptionListener;
+    private TaskListener<Triple<Channel, String, ArrayList<String>>> dataListener;
 
     public FIConnection(BufferedReader in, PrintWriter out) {
         this.in = in;
@@ -83,13 +95,16 @@ public class FIConnection {
         this.registerListener = listener;
     }
 
-    public void subscribe(Channel channel, String user) {
+    public void subscribe(Channel channel, String user, TaskListener listener) {
         if(this.canSubscribe) {
             sendMsg(ToServerMessage.Tag.SUBSCRIBE, "channel", channel.toString(), "user", user);
             this.canSubscribe = false;
-        } else {
-            // TODO: Should this.class or the UI handle this case?
-        }
+            this.subscriptionListener = listener;
+        } // UI should disable subscribe button until @canSubscribe@ is unlocked.
+    }
+
+    public void setDataListener(TaskListener<Triple<Channel, String, ArrayList<String>>> listener) {
+        this.dataListener = listener;
     }
 
     private String readLine() throws IOException {
@@ -137,6 +152,15 @@ public class FIConnection {
     public void completeRegistration() {
         Log.d("REGISTRATION", "Completed");
         this.isRegistered = true;
-        this.registerListener.onFinished();
+        this.registerListener.onFinished(null);
+    }
+
+    public void completeSubscription() {
+        subscriptionListener.onFinished(null);
+    }
+
+    protected void tweetsArrived(Tuple<String, ArrayList<String>> userAndTweets) {
+        // Log.d("TWEET_ARRIVED", userAndTweets.toString());
+        this.dataListener.onFinished(new Triple<>(Channel.TWITTER, userAndTweets.left, userAndTweets.right));
     }
 }

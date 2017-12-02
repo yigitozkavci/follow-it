@@ -36,14 +36,11 @@ class TwitterAgent extends Agent {
     try {
       Paging paging = this.sinceId.isPresent() ? new Paging(this.sinceId.get()) : new Paging();
       List<Status> tweets = twitter.getUserTimeline(user.getName(), paging);
-//      watchers.forEach((watcher) -> {
-//        watcher.notifyDebug();
-//      });
       if (tweets.isEmpty())
         return;
       this.sinceId = Optional.of(tweets.get(0).getId());
       watchers.forEach((watcher) -> {
-        watcher.notifyUpdate(tweets);
+        watcher.notifyUpdate(user.getScreenName(), tweets);
       });
     } catch (TwitterException e) {
       // TODO Auto-generated catch block
@@ -67,7 +64,6 @@ public class TwitterChannel extends Channel {
       Optional<User> mb_user = findUser(username);
       if (mb_user.isPresent()) {
         User user = mb_user.get();
-        System.out.println(user.toString());
         if (!subscriptions.containsKey(user)) {
           ArrayList<Client> watcherClients = new ArrayList<>();
           subscriptions.put(user, watcherClients);
