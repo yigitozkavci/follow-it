@@ -1,6 +1,8 @@
 package com.followit.yigitozkavci.follow_it.adapters;
 
 import android.app.Activity;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,9 +35,15 @@ public class SubscriptionDataList extends ArrayAdapter<String> {
         LayoutInflater inflater = context.getLayoutInflater();
         View rowView = inflater.inflate(R.layout.subscription_list_item_view, null, true);
 
-        TextView txtTitle = (TextView) rowView.findViewById(R.id.txt);
+        SubscriptionData subscriptionDatum = subscriptionData.get(position);
 
-        txtTitle.setText(subscriptionData.get(position).getData());
+        TextView txtTitle = (TextView) rowView.findViewById(R.id.txt);
+        txtTitle.setText(subscriptionDatum.getData());
+        //txtTitle.setTextColor(subscriptionDatum.getIsNew() ? Color.RED : Color.BLACK);
         return rowView;
+    }
+
+    public SubscriptionData getItemAtPos(int position) {
+        return subscriptionData.get(position);
     }
 }

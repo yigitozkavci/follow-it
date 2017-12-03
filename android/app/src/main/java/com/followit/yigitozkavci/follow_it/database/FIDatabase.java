@@ -14,7 +14,7 @@ import com.followit.yigitozkavci.follow_it.network.Channel;
 /**
  * Created by yigitozkavci on 30.11.2017.
  */
-@Database(entities = { Subscription.class, SubscriptionData.class }, exportSchema = false, version = 8  )
+@Database(entities = { Subscription.class, SubscriptionData.class }, exportSchema = false, version = 15  )
 @TypeConverters({ ChannelTypeConverter.class })
 abstract public class FIDatabase extends RoomDatabase {
     public abstract SubscriptionDao subscriptionDao();

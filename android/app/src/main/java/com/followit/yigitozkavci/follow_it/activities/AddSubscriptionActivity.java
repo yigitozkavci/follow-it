@@ -1,6 +1,7 @@
 package com.followit.yigitozkavci.follow_it.activities;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.arch.persistence.room.Room;
 import android.os.Bundle;
 import android.view.View;
@@ -28,32 +29,25 @@ public class AddSubscriptionActivity extends Activity {
         subscriptionDao = Room.databaseBuilder(getApplicationContext(), FIDatabase.class, "fi").build().subscriptionDao();
     }
 
-    public void handleAddFacebookSubscription(View view) {
-        final String user = ((EditText) findViewById(R.id.add_fb_sub_usr_txt)).getText().toString();
-        MainActivity.conn.subscribe(Channel.FACEBOOK, user, new TaskListener<Void>() {
-            @Override
-            public void onFinished(Void _v) {
-                new AddSubscriptionTask(subscriptionDao, new Subscription(Channel.FACEBOOK, user)) {
-                    @Override
-                    protected void onPostExecute(Void aVoid) {
-                        finish();
-                    }
-                }.execute();
-            }
-        });
-    }
-
     public void handleAddTwitterSubscription(View view) {
+        final Activity self = this;
         final String user = ((EditText) findViewById(R.id.add_twitter_sub_usr_txt)).getText().toString();
-        MainActivity.conn.subscribe(Channel.TWITTER, user, new TaskListener<Void>() {
+        MainActivity.conn.subscribe(Channel.TWITTER, user, new TaskListener<Boolean>() {
             @Override
-            public void onFinished(Void _v) {
-                new AddSubscriptionTask(subscriptionDao, new Subscription(Channel.TWITTER, user)) {
-                    @Override
-                    protected void onPostExecute(Void _v) {
-                        finish();
-                    }
-                }.execute();
+            public void onFinished(Boolean result) {
+                if(!result) {
+                    setResult(0);
+                    finish();
+                }
+                else {
+                    new AddSubscriptionTask(subscriptionDao, new Subscription(Channel.TWITTER, user)) {
+                        @Override
+                        protected void onPostExecute(Void _v) {
+                            setResult(1);
+                            finish();
+                        }
+                    }.execute();
+                }
             }
         });
     }

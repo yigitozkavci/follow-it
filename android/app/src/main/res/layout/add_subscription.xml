@@ -7,34 +7,12 @@
     android:layout_height="match_parent">
 
     <Button
-        android:id="@+id/add_fb_sub_btm"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="16dp"
-        android:onClick="handleAddFacebookSubscription"
-        android:text="Button"
-        app:layout_constraintBaseline_toBaselineOf="@+id/add_fb_sub_usr_txt"
-        app:layout_constraintRight_toRightOf="parent" />
-
-    <EditText
-        android:id="@+id/add_fb_sub_usr_txt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="16dp"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="Name"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
         android:id="@+id/add_twitter_sub_btm"
-        android:layout_width="88dp"
-        android:layout_height="48dp"
-        android:layout_marginRight="16dp"
+        android:layout_width="130dp"
+        android:layout_height="60dp"
+        android:layout_marginRight="24dp"
         android:onClick="handleAddTwitterSubscription"
-        android:text="Button"
+        android:text="@string/subscribe_twitter_button_text"
         app:layout_constraintBaseline_toBaselineOf="@+id/add_twitter_sub_usr_txt"
         app:layout_constraintRight_toRightOf="parent" />
 
@@ -43,10 +21,10 @@
         android:layout_width="214dp"
         android:layout_height="45dp"
         android:layout_marginLeft="16dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="8dp"
         android:ems="10"
         android:inputType="textPersonName"
         android:text="Name"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/add_fb_sub_usr_txt" />
+        app:layout_constraintTop_toTopOf="parent" />
 </android.support.constraint.ConstraintLayout>

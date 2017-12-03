@@ -26,9 +26,12 @@ public class SubscriptionData {
     @ColumnInfo(name = "data")
     private String data;
 
+    private transient boolean isNew;
+
     public SubscriptionData(int subscriptionId, String data) {
         this.subscriptionId = subscriptionId;
         this.data = data;
+        this.isNew = true;
     }
 
     public int getId() {
@@ -53,5 +56,13 @@ public class SubscriptionData {
 
     public void setSubscriptionId(int subscriptionId) {
         this.subscriptionId = subscriptionId;
+    }
+
+    public boolean getIsNew() {
+        return this.isNew;
+    }
+
+    public void isSeen() {
+        this.isNew = false;
     }
 }

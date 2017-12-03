@@ -1,6 +1,7 @@
 package com.followit.yigitozkavci.follow_it.activities;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.arch.persistence.room.Room;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -73,8 +74,8 @@ public class DashboardActivity extends AppCompatActivity {
         this.subscriptionDataDao = db.subscriptionDataDao();
 
         // Enable this to flush the database
-        new DeleteSubscriptionsTask(subscriptionDao).execute();
         new DeleteSubscriptionDataTask(subscriptionDataDao).execute();
+        new DeleteSubscriptionsTask(subscriptionDao).execute();
 
         MainActivity.conn.setDataListener(new TaskListener<Triple<Channel, String, ArrayList<String>>>() {
             @Override
@@ -128,6 +129,36 @@ public class DashboardActivity extends AppCompatActivity {
 
     public void handleAddSubscription(View view) {
         Intent intent = new Intent(this, AddSubscriptionActivity.class);
-        startActivity(intent);
+        startActivityForResult(intent, 1);
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1) {
+            if(resultCode == 0) { // Subscription failed
+                AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(
+                        this);
+
+// Setting Dialog Title
+                alertDialog2.setTitle("Subscription");
+
+// Setting Dialog Message
+                alertDialog2.setMessage("User for the Twitter subscription cannot be found.");
+
+// Showing Alert Dialog
+                alertDialog2.show();
+            } else {
+                AlertDialog.Builder alertDialog2 = new AlertDialog.Builder(
+                        this);
+
+// Setting Dialog Title
+                alertDialog2.setTitle("Subscription");
+
+// Setting Dialog Message
+                alertDialog2.setMessage("Success!");
+
+// Showing Alert Dialog
+                alertDialog2.show();
+            }
+        }
     }
 }

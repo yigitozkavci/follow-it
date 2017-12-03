@@ -16,13 +16,10 @@ public class Command {
   private transient ChannelBuilder channelBuilder;
   private final String USERNAME_KEY = "username";
   private final String DATA_CHAN_KEY = "channel";
-  private final String FACEBOOK_NAME = "Facebook";
   private final String TWITTER_NAME = "Twitter";
   private final String CHAN_USER_KEY = "user";
   
   public Command() {}
-  //{ "tag": "REGISTER", "data": { "username": "Yigit" } }
-  // { "tag": "SUBSCRIBE", "data": { "channel": "Twitter", "user": "YigitOzkavci" } }
   public void perform(Client client, ChannelBuilder channelBuilder) {
     this.client = client;
     this.channelBuilder = channelBuilder;
@@ -44,8 +41,8 @@ public class Command {
             .ifPresent((user) ->
               {
                 try {
-                  chan.subscribe(client, user);
-                  client.sendMessage(Server.Tag.SUBSCRIPTION_ACCEPT, "channel", chan.getClass().getName());
+                  final Server.Tag msgTag = chan.subscribe(client, user) ? Server.Tag.SUBSCRIPTION_ACCEPT : Server.Tag.SUBSCRIPTION_REJECT;
+                  client.sendMessage(msgTag, "channel", chan.getClass().getName());
                 } catch (SubscriptionException e) {
                   System.out.println(e.getMessage());
                   sendErrToClient(e.getMessage());
@@ -73,8 +70,6 @@ public class Command {
     // Uuu, monadic bind, love it
     return findDataFromKey(Client.Tag.SUBSCRIBE, DATA_CHAN_KEY).flatMap((chanName) -> {
       switch(chanName) {
-      case FACEBOOK_NAME:
-        return Optional.of(channelBuilder.getFacebookChannel());
       case TWITTER_NAME:
         return Optional.of(channelBuilder.getTwitterChannel());
       default:

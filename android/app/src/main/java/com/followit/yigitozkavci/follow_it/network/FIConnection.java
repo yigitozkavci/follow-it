@@ -33,7 +33,7 @@ class SocketWatcher extends Thread {
             try {
                 this.processMessage(new Gson().fromJson(line, FromServerMessage.class));
             } catch(ProtocolException e) {
-                Log.e("PROTOCOL_ERROR", "Error while processing protocol messages", e);
+                Log.e("PROTOCOL_ERROR", "ProtocolException", e);
             }
         }
     }
@@ -42,13 +42,17 @@ class SocketWatcher extends Thread {
         Log.d("MESSAGE", "Got message: " + respMsg.toString());
         switch(respMsg.getTag()) {
             case ERROR:
-                throw new ProtocolException("Received error from server: " + respMsg.getErrorMsg());
+                Log.e("ERROR_FROM_SERVER", "An error message arrived from server. Check server logs.");
             case REGISTER_ACCEPT:
                 this.conn.completeRegistration();
                 break;
             case SUBSCRIPTION_ACCEPT:
                 this.conn.setCanSubscribe(true);
-                this.conn.completeSubscription();
+                this.conn.completeSubscription(true);
+                break;
+            case SUBSCRIPTION_REJECT:
+                this.conn.setCanSubscribe(true);
+                this.conn.completeSubscription(false);
                 break;
             case TWEETS:
                 this.conn.tweetsArrived(respMsg.getTweetData());
@@ -56,7 +60,7 @@ class SocketWatcher extends Thread {
             case FB_POSTS:
                 break;
             default:
-                throw new ProtocolException("Unexpected message with tag " + respMsg.getTag() + " and data " + respMsg.getData());
+                Log.e("PROTOCOL_ERROR", "Unexpected message with tag " + respMsg.getTag() + " and data " + respMsg.getData());
         }
     }
 
@@ -79,7 +83,7 @@ public class FIConnection {
 
     // Task listeners
     private TaskListener<Void> registerListener;
-    private TaskListener<Void> subscriptionListener;
+    private TaskListener<Boolean> subscriptionListener;
     private TaskListener<Triple<Channel, String, ArrayList<String>>> dataListener;
 
     public FIConnection(BufferedReader in, PrintWriter out) {
@@ -155,8 +159,8 @@ public class FIConnection {
         this.registerListener.onFinished(null);
     }
 
-    public void completeSubscription() {
-        subscriptionListener.onFinished(null);
+    public void completeSubscription(boolean result) {
+        subscriptionListener.onFinished(result);
     }
 
     protected void tweetsArrived(Tuple<String, ArrayList<String>> userAndTweets) {

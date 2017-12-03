@@ -13,7 +13,7 @@ import java.util.HashMap;
  */
 public class FromServerMessage {
     public enum Tag {
-        ERROR, REGISTER_ACCEPT, SUBSCRIPTION_ACCEPT, TWEETS, FB_POSTS;
+        ERROR, REGISTER_ACCEPT, SUBSCRIPTION_ACCEPT, SUBSCRIPTION_REJECT, TWEETS, FB_POSTS;
 
         public boolean isSubscribedDataTag() {
             return this == TWEETS || this == FB_POSTS;

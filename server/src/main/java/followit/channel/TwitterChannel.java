@@ -33,7 +33,6 @@ class TwitterAgent extends Agent {
   @Override
   public void run() {
     // TODO Auto-generated method stub
-    System.out.println("Running for user " + user + " and watchers " + watchers.toString());
     try {
       Paging paging = this.sinceId.isPresent() ? new Paging(this.sinceId.get()) : new Paging();
       List<Status> tweets = twitter.getUserTimeline(user.getId(), paging);
@@ -59,9 +58,9 @@ public class TwitterChannel extends Channel {
     subscriptions = new HashMap<>();
   }
 
-  public void subscribe(Client client, String username) throws SubscriptionException {
+  public boolean subscribe(Client client, String username) throws SubscriptionException {
     super.clientCheck(client);
-    System.out.println("Subscribing to user " + username);
+    System.out.println("Subscribing to twitter user " + username);
     try {
       Optional<User> mb_user = findUser(username);
       if (mb_user.isPresent()) {
@@ -72,8 +71,9 @@ public class TwitterChannel extends Channel {
           new Timer().scheduleAtFixedRate(new TwitterAgent(user, watcherClients, twitter), 0, 5000);
         }
         subscriptions.get(user).add(client);
+        return true;
       } else {
-        throw new SubscriptionException("User cannot be found");
+        return false;
       }
     } catch (TwitterException e) {
       throw new SubscriptionException(e);
