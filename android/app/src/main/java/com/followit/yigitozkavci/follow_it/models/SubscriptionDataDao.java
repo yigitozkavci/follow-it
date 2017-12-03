@@ -16,6 +16,10 @@ public interface SubscriptionDataDao {
     @Query("SELECT * FROM subscription_data")
     List<SubscriptionData> getAll();
 
+
+    @Query("SELECT * FROM subscription_data WHERE subscription_id = :sub_id")
+    List<SubscriptionData> getWhere(int sub_id);
+
     @Insert
     void insertSubscriptionData(SubscriptionData sd);
 

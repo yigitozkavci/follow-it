@@ -15,12 +15,18 @@ import java.util.List;
 
 public class GetSubscriptionDataTask extends AsyncTask<Void, Void, List<SubscriptionData>> {
     private SubscriptionDataDao dao;
+    private Integer sub_id;
 
     public GetSubscriptionDataTask(SubscriptionDataDao dao) {
         this.dao = dao;
     }
 
+    public GetSubscriptionDataTask(SubscriptionDataDao dao, int sub_id) {
+        this.dao = dao;
+        this.sub_id = sub_id;
+    }
+
     protected List<SubscriptionData> doInBackground(Void... params) {
-        return dao.getAll();
+        return this.sub_id == null ? dao.getAll() : dao.getWhere(sub_id);
     }
 }

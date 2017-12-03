@@ -27,13 +27,18 @@ public class SingleSubscriptionActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.single_subscription);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
 
         final ListView subscriptionDataView = findViewById(R.id.subscription_data_list);
         final Activity self = this;
 
         SubscriptionDataDao dao = DashboardActivity.db.subscriptionDataDao();
 
-        new GetSubscriptionDataTask(dao) {
+        new GetSubscriptionDataTask(dao, getIntent().getIntExtra("sub_id", 1)) {
             @Override
             protected void onPostExecute(List<SubscriptionData> subscriptionData) { // TODO: Where query with id parameter came from Intent.
                 SubscriptionDataList adapter = new SubscriptionDataList(self, subscriptionData);

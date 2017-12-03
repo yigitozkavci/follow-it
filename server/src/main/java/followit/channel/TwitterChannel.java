@@ -33,9 +33,10 @@ class TwitterAgent extends Agent {
   @Override
   public void run() {
     // TODO Auto-generated method stub
+    System.out.println("Running for user " + user + " and watchers " + watchers.toString());
     try {
       Paging paging = this.sinceId.isPresent() ? new Paging(this.sinceId.get()) : new Paging();
-      List<Status> tweets = twitter.getUserTimeline(user.getName(), paging);
+      List<Status> tweets = twitter.getUserTimeline(user.getId(), paging);
       if (tweets.isEmpty())
         return;
       this.sinceId = Optional.of(tweets.get(0).getId());
@@ -60,6 +61,7 @@ public class TwitterChannel extends Channel {
 
   public void subscribe(Client client, String username) throws SubscriptionException {
     super.clientCheck(client);
+    System.out.println("Subscribing to user " + username);
     try {
       Optional<User> mb_user = findUser(username);
       if (mb_user.isPresent()) {
