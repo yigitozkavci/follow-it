@@ -1,0 +1,218 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\graphicspath{ {images/} }
+\usepackage{listings}
+\usepackage{color}
+\usepackage{textcomp}
+\usepackage{xcolor}
+
+\title{CMPE436 Final Project - Follow-it}
+\author{
+  Yiğit Özkavcı \\
+  \texttt{2013400111} \\
+  \texttt{yigit.ozkavci@boun.edu.tr}
+}
+\date{December 2017}
+
+\begin{document}
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{lightgray}{rgb}{0.9,0.9,0.9}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\lstset{ %
+  backgroundcolor=\color{lightgray},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}; should come as last argument
+  basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+  breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+  breaklines=true,                 % sets automatic line breaking
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{mygreen},    % comment style
+  deletekeywords={...},            % if you want to delete keywords from the given language
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+  extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+  keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+  keywordstyle=\color{blue},       % keyword style
+  language=Octave,                 % the language of the code
+  morekeywords={*,...},            % if you want to add more keywords to the set
+  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+  numbersep=5pt,                   % how far the line-numbers are from the code
+  numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+  rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+  showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+  showstringspaces=false,          % underline spaces within strings only
+  showtabs=false,                  % show tabs within strings adding particular underscores
+  stepnumber=2,                    % the step between two line-numbers. If it's 1, each line will be numbered
+  stringstyle=\color{mymauve},     % string literal style
+  tabsize=2,	                   % sets default tabsize to 2 spaces
+  title=\lstname,                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+}
+
+\lstdefinelanguage{json}{
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+}
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\section{Abstract}
+Follow-it is an Android application that lets you get information on what someone is posting on their Twitter account. Along with that, Follow-it lets you get continuous updates whenever someone tweets something, by making use of sockets.
+
+In the following sections, we will describe the behavior of both server and client, and how we encode the data over the sockets in a useful manner.
+
+\section{Introduction}
+\par Motivation of creating Follow-it is to be updated whenever someone updates their feed on the Twitter. With the Twitter UI being distracting for this simple achivement, this Android application achieves the task well enough.
+
+\par The application has a simple interface and user flow: a screen with a text field welcomes the user, user enters his/her name and registers. At this time, application sends the request to server via socket, in FIMessage(see \ref{messages}) format.
+
+\par After registration is accepted by the server, user is ready to add new subscriptions (for more on subscriptions, see \ref{subscriptions}). To do this, user clicks to ``Add Subscription'' button and fills the ``username'' information in there. After user's attempt on creating a subscription is completed, it's the time an approval/rejection message comes from the server. At this point, server decides whether it's a valid Twitter username (server makes this test via twitter4j\cite{twitter4j} library) and based on this decision, tells the client whether its subscription creation request is to be fulfilled or not.
+
+\par After subscription creation attempt is completed, user will get an alert box denoting whether the attempt has been successful or not. If successful, a new subscription record is added to both server and client. In server, this subscription info is kept in-memory, and without any databases. In client, though it's different. We use Android's Room\cite{room} persistence library to make sure we don't lose and data while transitioning between activities \& opening and closing the application.
+
+\par In dashboard page, we show user all of his/her subscriptions which s/he can click to find all updates about \textbf{that} subscription. In single subscription page, we present all of the tweet updates that has been received by this client until now.
+
+\par Due to way server handles updates, we have the initial data paged with 20 tweets maximum, and incrementally watch for the updates for every 5 seconds (see section for rate limiting: \ref{rate_limiting}). And server does some optimizations (see \ref{optimizations}) regarding the fetching for updates, because of the mentioned rate limiting.
+
+\newpage
+
+\section{Approach}
+We will divide discussing our approach to two different categories: server and client. This is because even though both architectures has many similarities (like message abstraction and connection interface), they also differ in many other areas (like data storage, event handling and type \& quantity of threads).
+
+\subsection{Server}
+As entry point in the server, we instansiate Twitter library, ServerSocket and Twitter Channel (see \ref{channels}). All server does after this is to wait for client connections and create a new client thread that communicates with that client, personally.
+
+Creating a client thread is simple from server's side:
+\begin{itemize}
+  \item Accept a connection from ServerSocket
+  \item Prepare input and output streams
+  \item Start the client thread with these gathered parameters (see \ref{client_thread})
+\end{itemize}
+
+\subsubsection{Client Thread}
+\label{client_thread}
+\par A client thread is a thread which is responsible of all the communication going on between server and THAT client. Since we don't need a client-to-client communication, client threads are completely independent of each other.
+
+\par Client thread is where the magic happens. Client thread listens the inputstream Server gave it while creating the socket connection with the client. Whenever something it written into inputstream, client picks it and processes it. We have a function with signature:
+\begin{lstlisting}[firstline=1, language=Java]
+Optional<Command> processInput(String inputLine)
+\end{lstlisting}
+\par As the obvious signature suggests, this function takes the input and \textbf{maybe} generates a command (see \ref{commands}) out of it. If client thread is indeed able to extract the command, it calls $perform()$ on command instance right away. 
+
+\par Before discussing commands, though, we should talk about handling messages by the server. After that, we will discuss implementation of those messages, namingly commands.
+
+\newpage
+\subsubsection{Messages}
+\label{messages}
+Server has defined two types of messages, with two distinct enum types for their tags: $Server.Tag$ and $Client.Tag$.
+
+\par A tag describes what that message wants to do. Every message in Follow-it must carry a valid tag along with it, and other fields are not obligatory, even though we have a convention of sending messages along with a data key. We will provide examples for each message type, so our convention will be obvious.\\
+
+\textbf{Client to Server Messages:}
+\begin{itemize}
+  \item \textbf{REGISTER}: Sent when client wants to register. A data with key ``username'' should be sent along with the message, indicating the username that client wants to register with.
+    \par Server then determines whether registration is successful or not (it always is, as we don't have a predicate for registration-checking, unlike subscription. See REGISTER\_ACCEPT for more.). An example:
+\begin{lstlisting}[language=json]
+{
+  "tag": "REGISTER",
+  "data": {
+    "username": "Yigit"
+  }
+}
+\end{lstlisting}
+  \item \textbf{SUBSCRIBE}: Sent when client wants to subscribe to a channel, for a user. Server then determines whether user is eligible to subscribe to the provided username for the provided channel. An example:
+\begin{lstlisting}[language=json]
+{
+  "tag": "SUBSCRIBE",
+  "data": {
+    "channel": "TWITTER",
+    "username": "LondraGazete"
+  }
+}
+\end{lstlisting}
+\end{itemize}
+
+\textbf{Server to Client Messages:}
+\begin{itemize}
+  \item \textbf{REGISTER\_ACCEPT}: Sent by the server if server decides that client can be registered. This is always the case, since we don't check eligibility of the registration. We could have rules like username being unique though.
+  \item \textbf{SUBSCRIPTION\_ACCEPT}: Sent by the server if server decides that client's subscription attempt is valid and accepted. Server decides whether a subscription attempt is valid by checking the Twitter username via Twitter4j API library. If user doesn't exist, a SUBSCRIPTION\_REJECT message is sent instead.
+  \item \textbf{SUBSCRIPTION\_REJECT}: Sent by the server if server decides that client's subscription attempt is not valid. This case only happens if the provided username is wrong or a Twitter user with that username doesn't exist. This decision requires us to make a HTTP request to Twitter API, via Twitter4j library.
+  \item \textbf{ERROR}: As we stated earlier, we have a pre-defined protocol message format, which includes having a valid json structure and having a valid key ``tag'' and a valid TAG value associated with it, which should be either ``REGISTER'' or ``SUBSCRIBE''. If client fails to send message with this format, server catches this error and immediately notifies the client about its mistake.
+    \par Message format being invalid is not the only case for this ERROR message. In specific points such as subscription, server can throw SubscriptionException or ProtocolException. All of these exceptions are always caught and turnt into a valid ``ERROR'' message to notify client properly. Server also logs all of these exception occurences, just in case of debugging.
+  \item \textbf{TWEETS}: This message denotes that server wants to send client tweets data, associated with an existing username. When client sees the message, it can be sure that there are tweet updates for the user with username associated with this message. Server doesn't send any empty updates to client if there are no tweet updates. We will discuss scheduling and pollig for tweet messages, as well as the rate limiting optimization in the following sections.
+\end{itemize}
+
+\subsubsection{Commands}
+\label{commands}
+Command is an abstraction over what to be done with a valid client message. If you want to perform a command, it takes action based on the message data it has, which consists of a tag and a hashmap with keys being Strings and values being Objects.
+
+\par For now, only commands server should handle are the messages with tags ``REGISTER'' and ``SUBSCRIBE''. Their behavior highly involves our task management in server, so we are discussing them in depth in the following sections.
+
+\newpage
+
+\subsubsection{Channels}
+\label{channels}
+Channels are essentially managers for the particular social media (only Twitter for our case). I mentioned that unlike client, we keep our data in-memory in server-side, and TwitterChannel is the object that keeps all the subscription data in its instance variable ``subscriptions'', which is just a mapping from users to list of clients.
+
+\par This hashmap's structure may seem a bit strange at first, but it has a good reason behind it. We will discuss on it at section \ref{rate_limiting}, since it involves the mindset evolved for rate limiting optimization.
+
+\par TwitterChannel is instansiated only once through all the server application. This is because we need only one manager to provide support for us for one social media. After that, the only thing one could do with this instance is to call $subscribe()$ on it. This is the major and only api this object exposes.
+
+\par Once one invokes subscribe on twitter channel, first we find the Twitter user with that username. Then there are two options:
+\begin{itemize}
+  \item If a subscription for that twitter user has been made before, we add that client to that user's watchers list
+  \item Else, we create a new entry on $subscriptions$ hashmap, and spawn a new TwitterAgent for that user. TwitterAgent will be discussed just below.
+\end{itemize}
+
+\par In order to watch updates on a certain user, we use Java's Timer class, along with TimerTask for scheduling tasks. The spawned TwitterAgents are subclasses of TimerTasks, and this inheritance allows us to invoke $run()$ method on each TwitterAgent every 5 seconds (we define this interval ourselves, and this is subject to change, see \ref{optimizations}).
+\subsubsection{Rate Limiting}
+\label{rate_limiting}
+\subsubsection{Optimizations} (fetching once for each user)
+\label{optimizations}
+\subsection{Client}
+label{client}
+\section{Concepts}
+\subsection{Subscriptions}
+\label{subscriptions}
+- Actual rate limiting
+
+\newpage
+
+\begin{thebibliography}{9}
+\bibitem{twitter4j}
+  Twitter4j: A Java library for the Twitter API http://twitter4j.org/en/index.html
+\bibitem{room}
+  Room: Persistence Library for Android https://developer.android.com/topic/libraries/architecture/room.html
+
+\end{thebibliography}
+
+\end{document}
