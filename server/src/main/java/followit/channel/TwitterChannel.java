@@ -15,12 +15,31 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.User;
 
-abstract class Agent extends TimerTask {}
-
-class TwitterAgent extends Agent {
+/**
+ * Watcher of the tweets. This object is spawned for each individual Twitter user
+ * we want to watch. Performs its action in per 5 seconds.
+ * 
+ * @author yigitozkavci
+ */
+class TwitterAgent extends TimerTask {
+  /**
+   * Twitter user that this agent tracks
+   */
   private User user;
+  
+  /**
+   * Clients that this agent will notify occasionally
+   */
   private List<Client> watchers;
+  
+  /**
+   * Twitter API instance
+   */
   private Twitter twitter;
+  
+  /**
+   * Tweet ID for caching tweets
+   */
   private Optional<Long> sinceId;
 
   public TwitterAgent(User user, ArrayList<Client> watchers, Twitter twitter) {
@@ -49,6 +68,11 @@ class TwitterAgent extends Agent {
   }
 }
 
+/**
+ * Twitter channel. See {@link followit.channel.Channel} for more on channels
+ * 
+ * @author yigitozkavci
+ */
 public class TwitterChannel extends Channel {
   private Twitter twitter;
   private HashMap<User, List<Client>> subscriptions;
@@ -80,6 +104,13 @@ public class TwitterChannel extends Channel {
     }
   }
 
+  /**
+   * Find Twitter user with the given username
+   * 
+   * @param username Username of the Twitter user we are looking for
+   * @return A user if we can find him/her, or an empty optional if we cannot
+   * @throws TwitterException
+   */
   private Optional<User> findUser(String username) throws TwitterException {
     return twitter.searchUsers(username, 5).stream().findFirst();
   }

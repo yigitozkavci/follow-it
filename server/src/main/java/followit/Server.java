@@ -7,26 +7,46 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import facebook4j.Facebook;
 import facebook4j.FacebookException;
-import facebook4j.FacebookFactory;
 import followit.channel.ChannelBuilder;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 
+/**
+ * The entry point for this distributed application. This class is responsible of listening
+ * clients and spawning client threads.
+ * 
+ * @author yigitozkavci
+ */
 public class Server {
+  /**
+   * Message types from server to client.
+   */
   public enum Tag {
-    REGISTER_ACCEPT, SUBSCRIPTION_ACCEPT, SUBSCRIPTION_REJECT, ERROR, TWEETS
+    /**
+     * Accept the registration of the client
+     */
+    REGISTER_ACCEPT,
+    /**
+     * Accept the subscription attempt of the client
+     */
+    SUBSCRIPTION_ACCEPT,
+    /**
+     * Reject the subscription attempt of the client
+     */
+    SUBSCRIPTION_REJECT,
+    /**
+     * An error has occurred on the server. Details will be given in .data.message node
+     */
+    ERROR, TWEETS
   }
   
   public static void main(String[] args) throws FacebookException, TwitterException, IOException {
     // TODO Auto-generated method stub
-    Facebook facebook = new FacebookFactory().getInstance();
-    // System.out.println(facebook.searchUsers("Yiğit Özkavcı").get(0).getBio());
 
     Twitter twitter = new TwitterFactory().getInstance();
-    ChannelBuilder channelBuilder = new ChannelBuilder(facebook, twitter);
+    ChannelBuilder channelBuilder = new ChannelBuilder(twitter);
     try (ServerSocket server = new ServerSocket(4444);) {
       while (true) {
         Socket clientSocket = server.accept();
