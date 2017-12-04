@@ -6,6 +6,7 @@
 \usepackage{color}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{hyperref}
 
 \title{CMPE436 Final Project - Follow-it}
 \author{
@@ -40,24 +41,23 @@
   keywordstyle=\color{blue},       % keyword style
   language=Octave,                 % the language of the code
   morekeywords={*,...},            % if you want to add more keywords to the set
-  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
-  numbersep=5pt,                   % how far the line-numbers are from the code
-  numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
   rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
   showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
   showstringspaces=false,          % underline spaces within strings only
   showtabs=false,                  % show tabs within strings adding particular underscores
   stepnumber=2,                    % the step between two line-numbers. If it's 1, each line will be numbered
   stringstyle=\color{mymauve},     % string literal style
-  tabsize=2,	                   % sets default tabsize to 2 spaces
-  title=\lstname,                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+  tabsize=2,	                     % sets default tabsize to 2 spaces
+  title=\lstname,                  % show the filename of files included with \lstinputlisting; also try caption instead of title
+    numbers=none,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
 }
 
 \lstdefinelanguage{json}{
-    numbers=left,
-    numberstyle=\scriptsize,
-    stepnumber=1,
-    numbersep=8pt,
+    numbers=none,
     showstringspaces=false,
     breaklines=true,
     frame=lines,
@@ -95,7 +95,7 @@ In the following sections, we will describe the behavior of both server and clie
 
 \par The application has a simple interface and user flow: a screen with a text field welcomes the user, user enters his/her name and registers. At this time, application sends the request to server via socket, in FIMessage(see \ref{messages}) format.
 
-\par After registration is accepted by the server, user is ready to add new subscriptions (for more on subscriptions, see \ref{subscriptions}). To do this, user clicks to ``Add Subscription'' button and fills the ``username'' information in there. After user's attempt on creating a subscription is completed, it's the time an approval/rejection message comes from the server. At this point, server decides whether it's a valid Twitter username (server makes this test via twitter4j\cite{twitter4j} library) and based on this decision, tells the client whether its subscription creation request is to be fulfilled or not.
+\par After registration is accepted by the server, user is ready to add new subscriptions. To do this, user clicks to ``Add Subscription'' button and fills the ``username'' information in there. After user's attempt on creating a subscription is completed, it's the time an approval/rejection message comes from the server. At this point, server decides whether it's a valid Twitter username (server makes this test via twitter4j\cite{twitter4j} library) and based on this decision, tells the client whether its subscription creation request is to be fulfilled or not.
 
 \par After subscription creation attempt is completed, user will get an alert box denoting whether the attempt has been successful or not. If successful, a new subscription record is added to both server and client. In server, this subscription info is kept in-memory, and without any databases. In client, though it's different. We use Android's Room\cite{room} persistence library to make sure we don't lose and data while transitioning between activities \& opening and closing the application.
 
@@ -193,25 +193,108 @@ Channels are essentially managers for the particular social media (only Twitter 
   \item Else, we create a new entry on $subscriptions$ hashmap, and spawn a new TwitterAgent for that user. TwitterAgent will be discussed just below.
 \end{itemize}
 
-\par In order to watch updates on a certain user, we use Java's Timer class, along with TimerTask for scheduling tasks. The spawned TwitterAgents are subclasses of TimerTasks, and this inheritance allows us to invoke $run()$ method on each TwitterAgent every 5 seconds (we define this interval ourselves, and this is subject to change, see \ref{optimizations}).
+\par In order to watch updates on a certain user, we use Java's Timer class, along with TimerTask for scheduling tasks. The spawned TwitterAgents are subclasses of TimerTasks, and this inheritance allows us to invoke $run()$ method on each TwitterAgent every 5 seconds (we define this interval ourselves, and this is subject to change, see \ref{optimizations}). What this TwitterAgent does it that it makes a request to twitter via Twitter4j\cite{twitter4j} with the username it's built with, and gets the tweets associated with that user. Since we already performed the Twitter user check, from then on, we started using Twitter.User class to denote a real Twitter user, instead of a String denoting an unsafe Twitter username.
+
+\par After we have the tweets, \textbf{we mark this point at tweet feed} for further fetchings not to duplicate tweet fetching. If we have $>0$ amount of tweets in hand, we are ready to notify the watchers. Remember that we had two parameters for instansiating a TwitterAgent: a $Twitter.User$ and $List<Client>$. We call $notifyUpdate()$ on all of the agents with the tweets we fetched, and hence, we pushed the update to all clients.
+
+\newpage
+
 \subsubsection{Rate Limiting}
 \label{rate_limiting}
-\subsubsection{Optimizations} (fetching once for each user)
+One of the biggest concerns while making an application that consumes a 3rd party api is rate limiting. And Twitter API, which we consume has rate limiting individual to each of its endpoints. The endpoint we make use of most is the one allows us to fetch tweets, and it has a limit of 900 requests per 15 minutes.
+
+\par Given that we make request to Twitter API for fetching tweets per 5 seconds for each individual Twitter user, we can only have 5 concurrent Twitter users being watched. This is a hard constraint in the sense that we have no chance of changing it, since it's a third party API. But we can try to do some optimizations on the subject, which we discuss in section \ref{optimizations}.
+
+\subsubsection{Optimizations}
 \label{optimizations}
+\par Because of the hard constraint Twitter API dictates, we need find ways of allowing more clients getting concurrent updates. Hence, we did some optimizations regarding amount of requests being sent to client.
+
+\par We build internal data structure of Twitter Channel so that is focuses on a single user. This way, even though there are multiple clients watching for a user, we only fetch the tweet data once every 5 seconds for that user, and broadcast this to all clients. This method has a drawback though: we are unable to synchronize newcoming clients with the latest tweets, since we are only allowed to broadcast new updates for the user. We can achieve this behavior \textbf{partly} by caching the tweets and then sending them as bulk to newcoming clients, but tweets in that data can be deleted or updated by mentions, so there is no guaranteed way to achieve best of the both worlds.
+
 \subsection{Client}
-label{client}
-\section{Concepts}
-\subsection{Subscriptions}
-\label{subscriptions}
-- Actual rate limiting
+\label{client}
+Client architecture is different from the one we have in server, because of the nature of distributed applications, clients are the ones who needs to be proactive and tell the server what they want. In Android applications, this is done with buttons and inputs used by users that cause server to take some action.
+
+\par Before discussing the actual behavior of the Android application, we should talk a little bit about async tasks. 
+
+\newpage 
+
+\subsubsection{Async Programming}
+\label{async_programming}
+
+\par Every IO in this Android application is done asynchronously. This is considered the best practice because making a thread wait until some action is taken means blocking the whole activity, and also means that we are blocking the user. Every action taken, including registering and subscribing has a common interface (we are not talking about the actual Java interface) that causes them to pass a \textbf{listener} along with the action being taken. This is called the callback paradigm, which Javascript makes heavy use of.
+
+\par This listener should obey to the generic type provided when passing it to the task. This generic type dictates the return value of the listener, which constraints to the actual task that returns the value. Hence because of this constraint, we can say we want to get tweet data, and the signature of our data is $List<Tweet>$. This ensures the integrity of our program, which is hard to maintain when programming with callbacks / performing async programming.
+
+\par We are using these listeners in 3 places throughout the application: \\
+
+\par \textbf{Registration}: It being called is enough as evidence that registration is completed, no need for an actual result
+\begin{lstlisting}[firstline=1, language=Java]
+TaskListener<Void>
+\end{lstlisting}
+
+\par \textbf{Subscription}: True if subscription succeeded, false otherwise
+\begin{lstlisting}[firstline=1, language=Java]
+TaskListener<Boolean>
+\end{lstlisting}
+
+\par \textbf{Receiving Data}: This may seem a little bit odd, but the triple result actually explains much. It stands for: there is data of tweets coming for \textbf{Channel} channel for \textbf{String} user.
+\begin{lstlisting}[firstline=1, language=Java]
+TaskListener<Triple<Channel, String, ArrayList<String>>
+\end{lstlisting}
+
+\newpage
+
+\subsubsection{Application Behavior}
+\label{application_behavior}
+\par When Android is booted, we don't open the socket connection right away, because it would be meaningless since user hasn't done anything yet, and there is nothing for server to consider a client as. User sees a welcome page with just an input box and a button, which is used to register user, and hence client to server. User enters his/her username, then we send server a REGISTER message. Then this activity does absolutely nothing, until a ``REGISTER\_ACCEPT'' message comes from the server. When the message arrives, the callback we provided runs $startActivity()$ and we go to dashboard.
+
+\par In the dashboard, we have a list of subscriptions provided. Dashboard activity is responsible of calling the database task ``GetSubscriptions'' and asynchronously fill the subscription data with existing persistent storage. The reason behind deciding on using a persistent storage is that the data we pass with the activities turnt out to be too complex for serializing \& deserializing and passing as intent extra. Because of this, we decided to use Android's Room library for persistent storage, and we've written our tasks, entities and relationships for our models.
+
+\par Database tasks are defined in $tasks$ package, and in order for one to use them, one should provide necessary parameters to the constructor and provide a callback, since this is a asynchronous task. This is indeed when DashboardActivity does on its $onStart()$ call.
+
+\par Android application has other behaviors as well, but they will be demonstrated in presentation.
+
+\section{Experimental Methodology}
+While working with a 3rd party API, it's always hard to write automated tests, since you need to mock all the behavior of the API, as it's not in your source code. Luckily, we make a very little use of Twitter API, and that's something we can experiment on easily.
+
+\par We created a new Twitter user for the sake of testing this API, and our server's incremental data pushes. We are the owner of the account \url{https://twitter.com/fi\_debug} and tested the tweet data pushing feature on-hand. Here is the experiment steps:
+
+\begin{enumerate}
+  \item Open the application
+  \item Write a arbitrary username and click to ``Register'' button
+  \item See the empty page, and click to ``Add Subscription'' button
+  \item Type the name ``wrong\_user\_name\_203120582'', click ``Add Subscription''
+  \item Expect a failure popup message
+  \item Repeat steps from 3 to 4 with username ``YigitOzkavci''
+  \item Expect a successful popup message
+  \item Repeat steps from 3 to 4 with username ``fi\_debug''
+  \item Expect a successful popup message
+  \item Click on subscription ``YigitOzkavci'' and expect to see latest tweets of the account @YigitOzkavci and go back in Android navigation
+  \item Click on subscription ``fi\_debug'' and expect to see latest tweets of the account @fi\_debug and go back in Android navigation
+  \item Post a tweet as user @fi\_debug from Twitter UI
+  \item Click on subscription ``fi\_debug'' and expect to see newly-posted tweet
+\end{enumerate}
+\section{Experimental Results}
+Experimental results were expected, but it also notified us about the constraint on api rate limiting \& not being able to deliver old tweets to new subscribers (see \ref{optimizations} as a reminder).
+\section{Appendix}
+
+\lstinputlisting[language=Java]{../server/src/main/java/followit/Server.java}
+\lstinputlisting[language=Java]{../server/src/main/java/followit/Client.java}
+\lstinputlisting[language=Java]{../server/src/main/java/followit/channel/Channel.java}
+\lstinputlisting[language=Java]{../server/src/main/java/followit/channel/ChannelBuilder.java}
+\lstinputlisting[language=Java]{../server/src/main/java/followit/channel/TwitterChannel.java}
+\lstinputlisting[language=Java]{../server/src/main/java/followit/command/Command.java}
+\lstinputlisting[language=Java]{../server/src/main/java/followit/Utils/Tuple.java}
+\lstinputlisting[language=Java]{../server/src/main/java/errors/SubscriptionException.java}
 
 \newpage
 
 \begin{thebibliography}{9}
 \bibitem{twitter4j}
-  Twitter4j: A Java library for the Twitter API http://twitter4j.org/en/index.html
+  Twitter4j: A Java library for the Twitter API \url{http://twitter4j.org/en/index.html}
 \bibitem{room}
-  Room: Persistence Library for Android https://developer.android.com/topic/libraries/architecture/room.html
+  Room: Persistence Library for Android \url{https://developer.android.com/topic/libraries/architecture/room.html}
 
 \end{thebibliography}
 
